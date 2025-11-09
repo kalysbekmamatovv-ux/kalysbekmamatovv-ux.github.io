@@ -1,0 +1,72 @@
+/* books.css - Стили для страницы с книгами */
+
+.books-section {
+    padding: 60px 0;
+    background-color: var(--light-bg); /* Используем цвет из вашего kert.css */
+}
+
+.books-section .section-title,
+.books-section .section-subtitle {
+    text-align: center;
+}
+
+.book-list {
+    display: grid;
+    /* Адаптивная сетка: 3 колонки на пк, 2 на планшетах, 1 на мобильных */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+    gap: 30px; /* Отступ между карточками */
+    margin-top: 40px;
+}
+
+.book-item {
+    background-color: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px var(--shadow-light); /* Тень из вашего kert.css */
+    overflow: hidden; 
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.book-item:hover {
+    transform: translateY(-5px); 
+    box-shadow: 0 8px 20px var(--shadow-medium); 
+}
+
+.book-cover {
+    width: 100%;
+    height: 220px; 
+    object-fit: cover; 
+    background-color: #e9ecef; /* Фон, если картинка не загрузится */
+    border-bottom: 1px solid #eee;
+}
+
+.book-item h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 20px 20px 10px 20px;
+}
+
+.book-item p {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin: 0 20px 20px 20px;
+    flex-grow: 1; /* Описание занимает все свободное место */
+}
+
+.book-actions {
+    background-color: var(--light-bg);
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 10px; 
+    justify-content: flex-start;
+}
+
+/* Стили кнопок .btn берутся из вашего главного файла kert.css */
+.book-actions .btn {
+    text-decoration: none;
+    text-align: center;
+    padding: 10px 20px;
+}
