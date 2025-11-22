@@ -1,8 +1,10 @@
 /* books.css - Стили для страницы с книгами */
 
+/* Основная секция */
 .books-section {
     padding: 60px 0;
-    background-color: var(--light-bg); /* Используем цвет из вашего kert.css */
+    background-color: var(--light-bg); /* Берется из kert.css */
+    min-height: 80vh;
 }
 
 .books-section .section-title,
@@ -10,53 +12,106 @@
     text-align: center;
 }
 
+/* --- СТИЛИ ДЛЯ ФИЛЬТРА (КАТАЛОГИ) --- */
+.catalog-filter {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 40px;
+    margin-top: 30px;
+}
+
+.filter-btn {
+    padding: 10px 25px;
+    border: 2px solid var(--primary-color, #007bff); /* Цвет из kert.css или дефолтный синий */
+    background-color: transparent;
+    color: var(--text-color, #333);
+    border-radius: 25px;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+/* Эффект при наведении на кнопку */
+.filter-btn:hover {
+    background-color: var(--primary-color, #007bff);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* Активная кнопка */
+.filter-btn.active {
+    background-color: var(--primary-color, #007bff);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* --- СЕТКА КНИГ --- */
 .book-list {
     display: grid;
-    /* Адаптивная сетка: 3 колонки на пк, 2 на планшетах, 1 на мобильных */
+    /* Адаптивная сетка: 3 колонки на ПК, авто-перенос */
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-    gap: 30px; /* Отступ между карточками */
+    gap: 30px;
     margin-top: 40px;
 }
 
+/* Карточка книги */
 .book-item {
-    background-color: var(--white);
+    background-color: var(--white, #fff);
     border-radius: 10px;
-    box-shadow: 0 4px 12px var(--shadow-light); /* Тень из вашего kert.css */
+    box-shadow: 0 4px 12px var(--shadow-light, rgba(0,0,0,0.1));
     overflow: hidden; 
     display: flex;
     flex-direction: column;
     transition: transform 0.3s, box-shadow 0.3s;
+    
+    /* Анимация появления */
+    animation: fadeIn 0.5s ease;
+}
+
+/* Анимация для фильтрации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Класс для скрытия книги (добавляется через JS) */
+.book-item.hide {
+    display: none;
 }
 
 .book-item:hover {
     transform: translateY(-5px); 
-    box-shadow: 0 8px 20px var(--shadow-medium); 
+    box-shadow: 0 8px 20px var(--shadow-medium, rgba(0,0,0,0.2)); 
 }
 
 .book-cover {
     width: 100%;
     height: 220px; 
     object-fit: cover; 
-    background-color: #e9ecef; /* Фон, если картинка не загрузится */
+    background-color: #e9ecef;
     border-bottom: 1px solid #eee;
 }
 
 .book-item h3 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--primary-color, #007bff);
     margin: 20px 20px 10px 20px;
 }
 
 .book-item p {
     font-size: 1rem;
-    color: var(--text-color);
+    color: var(--text-color, #333);
     margin: 0 20px 20px 20px;
-    flex-grow: 1; /* Описание занимает все свободное место */
+    flex-grow: 1;
 }
 
 .book-actions {
-    background-color: var(--light-bg);
+    background-color: var(--light-bg, #f8f9fa);
     padding: 20px;
     border-top: 1px solid #ddd;
     display: flex;
@@ -64,9 +119,28 @@
     justify-content: flex-start;
 }
 
-/* Стили кнопок .btn берутся из вашего главного файла kert.css */
+/* Кнопки действий */
 .book-actions .btn {
     text-decoration: none;
     text-align: center;
     padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color, #007bff);
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 2px solid #6c757d;
+    color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #6c757d;
+    color: #fff;
 }
