@@ -1,67 +1,62 @@
-document.addEventListener('DOMContentLoaded', () => {
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Регистрация - КОЛДОН КЕЛЕТ</title>
+<link rel="stylesheet" href="kert.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body class="body-auth">
+<!-- Добавим контейнер для сообщений -->
+<div id="message-box"></div>
+    
+<nav class="navbar">
+<div class="container">
+<div class="logo">
+<a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
+<img src="photo_2025-10-18_00-50-11.jpg" alt="Логотип" class="logo-img">
+<span class="site-name">КОЛДОН КЕЛЕТ</span>
+</a>
+</div>
+<div class="nav-links">
+<a href="login.html" class="btn btn-login active">Вход в аккаунт</a>
+</div>
+</div>
+</nav>
+<div class="login-page">
+<div class="form-container">
+<div class="avatar-placeholder">
+<i class="fa-solid fa-user-plus"></i>
+</div>
 
-    // ==========================================
-    // 1. ЛОГИКА ДЛЯ ГЛАВНОЙ СТРАНИЦЫ (ВКЛАДКИ)
-    // ==========================================
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
+<form id="register-form"> <!-- Удален action="#" -->
+<h2>Создание аккаунта</h2>
 
-    if (tabButtons.length > 0) {
-        function switchTab(targetId) {
-            tabButtons.forEach(button => button.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            const activeButton = document.querySelector(`.tab-button[data-tab="${targetId}"]`);
-            const activeContent = document.getElementById(targetId);
+<div class="input-group">
+<i class="fa-solid fa-envelope"></i>
+<input type="email" id="email" name="email" placeholder="Email ID" required>
+</div>
 
-            if (activeButton && activeContent) {
-                activeButton.classList.add('active');
-                activeContent.classList.add('active');
-            }
-        }
+<div class="input-group">
+<i class="fa-solid fa-lock"></i>
+<input type="password" id="password" name="password" placeholder="Password" required>
+</div>
+<div class="input-group">
+<i class="fa-solid fa-check-double"></i>
+<input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm Password" required>
+</div>
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.getAttribute('data-tab');
-                switchTab(targetId);
-            });
-        });
+<button type="submit" class="btn-login-submit btn-full">Зарегистрироваться</button>
 
-        // Активируем первую вкладку по умолчанию
-        const initialTabId = tabButtons[0].getAttribute('data-tab');
-        switchTab(initialTabId);
-    }
+<p class="toggle-form">
+Уже есть аккаунт? <a href="login.html">Войти</a>
+</p>
+</form>
+</div>
+</div>
 
-    // ==========================================
-    // 2. ЛОГИКА ДЛЯ БИБЛИОТЕКИ (ФИЛЬТР КНИГ)
-    // ==========================================
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const bookItems = document.querySelectorAll('.book-item');
-
-    if (filterButtons.length > 0) {
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                
-                // Убираем активность у всех кнопок
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                // Делаем активной нажатую
-                button.classList.add('active');
-
-                const filterValue = button.getAttribute('data-filter');
-
-                bookItems.forEach(item => {
-                    const itemCategory = item.getAttribute('data-category');
-
-                    if (filterValue === 'all' || filterValue === itemCategory) {
-                        // Показать книгу
-                        item.classList.remove('hide');
-                    } else {
-                        // Скрыть книгу
-                        item.classList.add('hide');
-                    }
-                });
-            });
-        });
-    }
-
-});
+<script type="module" src="kert.js"></script> 
+</body>
+</html>
