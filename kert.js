@@ -20,7 +20,7 @@ const FIREBASE_CONFIG = {
   storageBucket: "koldon-kelet.firebasestorage.app",
   messagingSenderId: "179403934698",
   appId: "1:179403934698:web:5680ad38bae74053108093",
-  measurementId: "G-034PYJ5444"
+  
 };
 
 let app, auth, db;
