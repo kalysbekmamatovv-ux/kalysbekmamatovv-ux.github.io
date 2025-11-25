@@ -11,15 +11,23 @@ import {
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
-// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE ---
-// ИСПРАВЛЕНО: Project ID установлен только как "koldon-kelet", как вы настаивали.
+// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ОБНОВЛЕНА) ---
+/**
+ * ВНИМАНИЕ: Конфигурация обновлена на основе предоставленного вами ключа 
+ * (Project ID: akajon-e1ab7). 
+ */
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8", // Ваш API Key
-    projectId: "koldon-kelet", 
-    authDomain: "koldon-kelet.firebaseapp.com", 
-    storageBucket: "koldon-kelet.appspot.com", 
-    messagingSenderId: "179403934698",
-    appId: "1:179403934698:web:5680ad38bae74053108093" 
+    apiKey: "AIzaSyDoixf1ARGsy12WM7jU5CElYYp6kGPqin0", // Ваш API Key
+    // ОБНОВЛЕНО: Project ID 
+    projectId: "akajon-e1ab7", 
+    // ОБНОВЛЕНО: Auth Domain
+    authDomain: "akajon-e1ab7.firebaseapp.com", 
+    // ОБНОВЛЕНО: Storage Bucket
+    storageBucket: "akajon-e1ab7.firebasestorage.app", 
+    messagingSenderId: "84897464590",
+    appId: "1:84897464590:web:cd298bfc043393a981175f",
+    // ОБНОВЛЕНО: Дополнительный ключ (measurementId)
+    measurementId: "G-255QNSNKNM" 
 };
 
 let app, auth, db;
@@ -100,7 +108,7 @@ async function initFirebase(resolve, reject) {
         } else if (error.code === 'auth/operation-not-allowed') {
             customError = "КРИТИЧЕСКАЯ ОШИБКА: Метод входа Email/Password выключен. Включите его в Firebase -> Authentication -> Sign-in method.";
         } else if (error.code === 'app/invalid-project-id') {
-             customError = "КРИТИЧЕСКАЯ ОШИБКА: Project ID недействителен. Возможно, ваш Project ID содержит суффикс, например 'koldon-kelet-1234'. Проверьте консоль Firebase.";
+             customError = "КРИТИЧЕСКАЯ ОШИБКА: Project ID недействителен. Убедитесь, что вы правильно вставили полный Project ID, включая суффикс (если он есть).";
         } else if (error.message.includes('A Firebase App named')) {
             // Эта ошибка возникает, если инициализация запускается дважды (редко, но возможно)
              customError = "КРИТИЧЕСКАЯ ОШИБКА: Повторная инициализация Firebase. Проверьте, что скрипт kert.js подключен только один раз.";
