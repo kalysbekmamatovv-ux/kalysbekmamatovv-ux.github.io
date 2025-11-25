@@ -14,7 +14,7 @@ import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11
 // --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ИСПОЛЬЗУЕТСЯ АКТУАЛЬНЫЙ КЛЮЧ И ID) ---
 // ВНИМАНИЕ: Проверьте правильность значений. Эта конфигурация должна быть скопирована из настроек вашего проекта Firebase.
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
+  apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
   authDomain: "koldon-kelet.firebaseapp.com",
   projectId: "koldon-kelet",
   storageBucket: "koldon-kelet.firebasestorage.app",
