@@ -42,22 +42,28 @@ function showMessage(message, type = 'success', duration = 3000) {
 }
 
 // --- 2. Инициализация Firebase и Аутентификация ---
-async function initFirebase() {
+// Теперь initFirebase принимает resolve/reject для контроля Promise
+async function initFirebase(resolve, reject) {
     // Конфигурация Firebase берется из глобальной переменной __firebase_config
     const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 
     if (Object.keys(firebaseConfig).length === 0) {
         console.error("Firebase configuration not found. Check if __firebase_config is defined.");
         showMessage("Ошибка: Конфигурация Firebase не найдена.", "error");
+        reject(new Error("Firebase config missing."));
         return;
     }
 
     try {
+        // 1. Инициализация объектов Firebase
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
 
-        // Попытка входа с токеном или анонимный вход
+        // *** МОМЕНТ РАЗРЕШЕНИЯ PROMISE: объекты auth/db установлены ***
+        resolve(); 
+
+        // 2. Аутентификация и слушатели (продолжают работать в фоновом режиме)
         if (typeof __initial_auth_token !== 'undefined') {
             await signInWithCustomToken(auth, __initial_auth_token);
         } else {
@@ -75,13 +81,14 @@ async function initFirebase() {
     } catch (error) {
         console.error("Ошибка инициализации Firebase:", error);
         showMessage("Ошибка инициализации: " + error.message, "error");
-        throw error; // Бросаем ошибку, чтобы Promis.reject мог ее поймать
+        reject(error); // Бросаем ошибку, чтобы Promis.reject мог ее поймать
     }
 }
 
 // Оборачиваем initFirebase в промис для глобального отслеживания
 firebaseInitPromise = new Promise((resolve, reject) => {
-    initFirebase().then(resolve).catch(reject);
+    // Передаем resolve и reject в функцию инициализации
+    initFirebase(resolve, reject); 
 });
 
 
@@ -140,19 +147,15 @@ function updateNavUI(user) {
 async function handleLogin(event) {
     event.preventDefault();
     
-    // ГАРАНТИРУЕМ, что Firebase инициализирован
+    // ГАРАНТИРУЕМ, что Firebase инициализирован до продолжения
     try {
         await firebaseInitPromise; 
     } catch (e) {
-        showMessage("Не удалось инициализировать Firebase. Попробуйте обновить страницу.", "error");
+        showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
         return;
     }
     
-    // Проверка auth все еще полезна, но уже менее критична
-    if (!auth) {
-        showMessage("Firebase Auth не инициализирован. Попробуйте обновить страницу.", "error");
-        return;
-    }
+    // Проверка auth была удалена, т.к. ее гарантирует Promise
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -180,19 +183,15 @@ async function handleLogin(event) {
 async function handleRegister(event) {
     event.preventDefault();
 
-    // ГАРАНТИРУЕМ, что Firebase инициализирован
+    // ГАРАНТИРУЕМ, что Firebase инициализирован до продолжения
     try {
         await firebaseInitPromise; 
     } catch (e) {
-        showMessage("Не удалось инициализировать Firebase. Попробуйте обновить страницу.", "error");
+        showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
         return;
     }
 
-    // Проверка auth все еще полезна
-    if (!auth) {
-        showMessage("Firebase Auth не инициализирован. Попробуйте обновить страницу.", "error");
-        return;
-    }
+    // Проверка auth была удалена, т.к. ее гарантирует Promise
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -229,8 +228,12 @@ async function handleRegister(event) {
 
 async function handleLogout(event) {
     event.preventDefault();
-    if (!auth) {
-        showMessage("Firebase Auth не инициализирован.", "error");
+    
+    // ГАРАНТИРУЕМ, что Firebase инициализирован до продолжения
+    try {
+        await firebaseInitPromise; 
+    } catch (e) {
+        showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
         return;
     }
 
@@ -298,9 +301,6 @@ function checkAccess(user) {
 
 // --- 6. Запуск всех скриптов ---
 document.addEventListener('DOMContentLoaded', () => {
-    // NOTE: initFirebase() теперь вызывается один раз вне DOMContentLoaded и оборачивается в Promise
-    // чтобы все функции могли его ожидать.
-
     // 2. Логика для главной страницы (Вкладки + Parallax)
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
