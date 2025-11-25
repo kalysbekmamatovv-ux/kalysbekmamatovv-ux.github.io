@@ -11,15 +11,15 @@ import {
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
-// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ВСТАВЛЕНА ВРУЧНУЮ) ---
-// ВНИМАНИЕ: Используется новая конфигурация, предоставленная пользователем.
+// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ИСПОЛЬЗУЕТСЯ АКТУАЛЬНЫЙ КЛЮЧ И ID) ---
+// ВНИМАНИЕ: Проверьте правильность значений. Эта конфигурация должна быть скопирована из настроек вашего проекта Firebase.
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
-    authDomain: "koldon-kelet.firebaseapp.com",
-    projectId: "koldon-kelet",
-    storageBucket: "koldon-kelet.firebasestorage.app",
+    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8", // Ваш API Key
+    authDomain: "koldon-kelet.firebaseapp.com", // Ваш Auth Domain
+    projectId: "koldon-kelet", // Ваш Project ID
+    storageBucket: "koldon-kelet.appspot.com", // Скорректирован суффикс для storageBucket
     messagingSenderId: "179403934698",
-    appId: "1:179403934698:web:5680ad38bae74053108093" // Новый App ID
+    appId: "1:179403934698:web:5680ad38bae74053108093" 
 };
 
 let app, auth, db;
@@ -54,23 +54,31 @@ function showMessage(message, type = 'success', duration = 3000) {
 async function initFirebase(resolve, reject) {
     
     if (typeof console !== 'undefined') {
-        console.log("Status конфигурации Firebase: ИСПОЛЬЗУЕТСЯ ПРЯМАЯ КОНФИГУРАЦИЯ (НОВЫЙ КЛЮЧ).");
+        console.log("Status: Попытка инициализации Firebase с предоставленной конфигурацией...");
     }
 
     try {
-        // 1. Инициализация объектов Firebase с новым ключом
+        // 1. Инициализация объектов Firebase
         app = initializeApp(FIREBASE_CONFIG); 
         auth = getAuth(app);
-        db = getFirestore(app); // Инициализация Firestore
+        db = getFirestore(app); 
+        
+        // ВАЖНО: Мы делаем дополнительную проверку здесь
+        const authDomainCheck = auth.config.authDomain;
+        if (!authDomainCheck.includes(FIREBASE_CONFIG.projectId)) {
+             console.warn(`ПРЕДУПРЕЖДЕНИЕ: Проект ID "${FIREBASE_CONFIG.projectId}" не совпадает с доменом авторизации "${authDomainCheck}". Проверьте FIREBASE_CONFIG.`);
+        }
+        
+        console.log("Инициализация успешно запущена. Ожидание состояния аутентификации.");
 
         // *** МОМЕНТ РАЗРЕШЕНИЯ PROMISE: объекты auth/db установлены ***
         resolve(); 
 
-        // 2. Аутентификация 
-        
+        // 2. Аутентификация (анонимный вход или вход с токеном)
         if (typeof __initial_auth_token !== 'undefined') {
             await signInWithCustomToken(auth, __initial_auth_token);
         } else {
+            // Анонимный вход позволяет системе продолжить работу, даже если авторизация не настроена
             await signInAnonymously(auth);
         }
         
@@ -85,8 +93,19 @@ async function initFirebase(resolve, reject) {
     } catch (error) {
         // Ловим ошибки инициализации
         console.error("КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ Firebase:", error);
-        // Выводим универсальное сообщение, которое призывает проверить настройки
-        showMessage("Критическая ошибка инициализации. Проверьте настройки Firebase (домены и методы входа).", "error"); 
+        
+        let customError = "Критическая ошибка инициализации. Домен заблокирован или конфигурация неверна.";
+
+        // Если ошибка связана с доменом, даем конкретные инструкции
+        if (error.code === 'auth/unauthorized-domain') {
+            customError = "КРИТИЧЕСКАЯ ОШИБКА: Домен 'kalysbekmamatovv-ux.github.io' не авторизован. Добавьте его в Firebase -> Authentication -> Settings -> Authorized domains.";
+        } else if (error.message.includes('authDomain')) {
+            customError = "КРИТИЧЕСКАЯ ОШИБКА: Проблема с параметром 'authDomain' в FIREBASE_CONFIG. Проверьте опечатку.";
+        } else if (error.code === 'auth/operation-not-allowed') {
+            customError = "КРИТИЧЕСКАЯ ОШИБКА: Метод входа Email/Password выключен. Включите его в Firebase -> Authentication -> Sign-in method.";
+        }
+
+        showMessage(customError, "error", 10000); 
         reject(error);
     }
 }
@@ -106,6 +125,8 @@ firebaseInitPromise = new Promise((resolve, reject) => {
 async function saveLoginTime(userId) {
     try {
         const timestamp = new Date().toISOString();
+        // ВНИМАНИЕ: Используем путь artifacts/{appId}/users/{userId}/...
+        // Но так как у нас нет __app_id, используем простой путь для диагностики
         const userDocRef = doc(db, "users", userId); 
 
         // Записываем данные в /users/{userId}
@@ -118,7 +139,7 @@ async function saveLoginTime(userId) {
 
     } catch (error) {
         // Если здесь ошибка, то проблема в правилах безопасности Firestore (Security Rules)
-        console.error("[Firestore] Ошибка записи данных (проверьте Security Rules):", error);
+        console.error("[Firestore] Ошибка записи данных (проверьте Security Rules).", error);
     }
 }
 
