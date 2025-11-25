@@ -12,19 +12,18 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase
 
 
 // --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ВСТАВЛЕНА ВРУЧНУЮ) ---
-// Внимание: Эта конфигурация была предоставлена пользователем, так как 
-// автоматическая переменная __firebase_config была недоступна.
+// ВНИМАНИЕ: Используется новая конфигурация, предоставленная пользователем (предыдущий ключ был заблокирован).
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
     authDomain: "koldon-kelet.firebaseapp.com",
     projectId: "koldon-kelet",
     storageBucket: "koldon-kelet.firebasestorage.app",
     messagingSenderId: "179403934698",
-    appId: "1:179403934698:web:39b765f8e9b8d159108093"
+    appId: "1:179403934698:web:5680ad38bae74053108093" // Новый App ID
+    // measurementId удален, так как он не используется в текущей логике
 };
 
 let app, auth, db;
-const apiKey = ""; 
 
 // Используем промис для отслеживания завершения инициализации
 let firebaseInitPromise; 
@@ -53,25 +52,22 @@ function showMessage(message, type = 'success', duration = 3000) {
 }
 
 // --- 2. Инициализация Firebase и Аутентификация ---
-// Теперь initFirebase принимает resolve/reject для контроля Promise
 async function initFirebase(resolve, reject) {
     
-    // *** ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ***
     if (typeof console !== 'undefined') {
-        console.log("Status конфигурации Firebase: ИСПОЛЬЗУЕТСЯ ПРЯМАЯ КОНФИГУРАЦИЯ.");
+        console.log("Status конфигурации Firebase: ИСПОЛЬЗУЕТСЯ ПРЯМАЯ КОНФИГУРАЦИЯ (НОВЫЙ КЛЮЧ).");
     }
-    // **********************************
 
     try {
-        // 1. Инициализация объектов Firebase
-        app = initializeApp(FIREBASE_CONFIG); // Используем прямо вставленную конфигурацию
+        // 1. Инициализация объектов Firebase с новым ключом
+        app = initializeApp(FIREBASE_CONFIG); 
         auth = getAuth(app);
         db = getFirestore(app);
 
         // *** МОМЕНТ РАЗРЕШЕНИЯ PROMISE: объекты auth/db установлены ***
         resolve(); 
 
-        // 2. Аутентификация и слушатели (продолжают работать в фоновом режиме)
+        // 2. Аутентификация 
         
         if (typeof __initial_auth_token !== 'undefined') {
             await signInWithCustomToken(auth, __initial_auth_token);
@@ -88,15 +84,15 @@ async function initFirebase(resolve, reject) {
         });
 
     } catch (error) {
+        // Ловим ошибки, если даже с новым ключом что-то не так
         console.error("КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ Firebase:", error);
-        showMessage("Критическая ошибка инициализации. Проверьте правильность вставленных ключей.", "error"); 
-        reject(error); // Бросаем ошибку, чтобы Promis.reject мог ее поймать
+        showMessage("Критическая ошибка инициализации. Возможно, домен не добавлен в список разрешенных в настройках Firebase.", "error"); 
+        reject(error);
     }
 }
 
 // Оборачиваем initFirebase в промис для глобального отслеживания
 firebaseInitPromise = new Promise((resolve, reject) => {
-    // Передаем resolve и reject в функцию инициализации
     initFirebase(resolve, reject); 
 });
 
