@@ -15,11 +15,12 @@ import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11
 // ВНИМАНИЕ: Проверьте правильность значений. Эта конфигурация должна быть скопирована из настроек вашего проекта Firebase.
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
-    authDomain: "koldon-kelet.firebaseapp.com",
-    projectId: "koldon-kelet",
-    storageBucket: "koldon-kelet.firebasestorage.app",
-    messagingSenderId: "179403934698",
-    appId: "1:179403934698:web:39b765f8e9b8d159108093"
+  authDomain: "koldon-kelet.firebaseapp.com",
+  projectId: "koldon-kelet",
+  storageBucket: "koldon-kelet.firebasestorage.app",
+  messagingSenderId: "179403934698",
+  appId: "1:179403934698:web:5680ad38bae74053108093",
+  measurementId: "G-034PYJ5444"
 };
 
 let app, auth, db;
