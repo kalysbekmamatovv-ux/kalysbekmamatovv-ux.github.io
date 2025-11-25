@@ -81,7 +81,13 @@ async function initFirebase(resolve, reject) {
             await signInWithCustomToken(auth, __initial_auth_token);
         } else {
             // Анонимный вход позволяет системе продолжить работу, даже если авторизация не настроена
-            await signInAnonymously(auth);
+            // Оборачиваем в try-catch, поскольку анонимный вход может быть отключен
+            try {
+                await signInAnonymously(auth);
+            } catch (e) {
+                // Если анонимный вход отключен, просто игнорируем ошибку и ждем onAuthStateChanged
+                console.warn("Анонимный вход не удался (возможно, отключен). Ожидание onAuthStateChanged.", e.code);
+            }
         }
         
         // Слушатель состояния аутентификации
@@ -104,11 +110,12 @@ async function initFirebase(resolve, reject) {
 
         // Если ошибка связана с доменом, даем конкретные инструкции
         if (error.code === 'auth/unauthorized-domain') {
-            customError = "КРИТИЧЕСКАЯ ОШИБКА: Домен 'kalysbekmamatovv-ux.github.io' не авторизован. Добавьте его в Firebase -> Authentication -> Settings -> Authorized domains.";
+            // ВНИМАНИЕ: Это критически важно! Добавьте ваш URL GitHub Pages (например, https://ВАШ_ПОЛЬЗОВАТЕЛЬ.github.io/ВАШ_РЕПОЗИТОРИЙ)
+            customError = "КРИТИЧЕСКАЯ ОШИБКА: Домен не авторизован! Добавьте URL-адрес вашего сайта (например, 'https://<ИМЯ>.github.io/<РЕПОЗИТОРИЙ>') в Firebase -> Authentication -> Settings -> Authorized domains.";
         } else if (error.code === 'auth/operation-not-allowed') {
             customError = "КРИТИЧЕСКАЯ ОШИБКА: Метод входа Email/Password выключен. Включите его в Firebase -> Authentication -> Sign-in method.";
         } else if (error.code === 'app/invalid-project-id') {
-             customError = "КРИТИЧЕСКАЯ ОШИБКА: Project ID недействителен. Убедитесь, что вы правильно вставили полный Project ID, включая суффикс (если он есть).";
+             customError = "КРИТИЧЕСКАЯ ОШИБКА: Project ID недействителен. Убедитесь, что вы правильно вставили полный Project ID.";
         } else if (error.message.includes('A Firebase App named')) {
             // Эта ошибка возникает, если инициализация запускается дважды (редко, но возможно)
              customError = "КРИТИЧЕСКАЯ ОШИБКА: Повторная инициализация Firebase. Проверьте, что скрипт kert.js подключен только один раз.";
