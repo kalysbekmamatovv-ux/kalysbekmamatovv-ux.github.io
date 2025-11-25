@@ -15,6 +15,9 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase
 let app, auth, db;
 const apiKey = ""; // API Key is automatically managed by Canvas
 
+// Используем промис для отслеживания завершения инициализации
+let firebaseInitPromise; 
+
 // --- 1. Вспомогательная функция для сообщений (замена alert) ---
 function showMessage(message, type = 'success', duration = 3000) {
     let msgBox = document.getElementById('message-box');
@@ -45,6 +48,7 @@ async function initFirebase() {
 
     if (Object.keys(firebaseConfig).length === 0) {
         console.error("Firebase configuration not found. Check if __firebase_config is defined.");
+        showMessage("Ошибка: Конфигурация Firebase не найдена.", "error");
         return;
     }
 
@@ -56,10 +60,8 @@ async function initFirebase() {
         // Попытка входа с токеном или анонимный вход
         if (typeof __initial_auth_token !== 'undefined') {
             await signInWithCustomToken(auth, __initial_auth_token);
-            // showMessage("Авторизация с токеном выполнена.", "success");
         } else {
             await signInAnonymously(auth);
-            // showMessage("Анонимный вход выполнен.", "success");
         }
         
         // Слушатель состояния аутентификации
@@ -73,8 +75,15 @@ async function initFirebase() {
     } catch (error) {
         console.error("Ошибка инициализации Firebase:", error);
         showMessage("Ошибка инициализации: " + error.message, "error");
+        throw error; // Бросаем ошибку, чтобы Promis.reject мог ее поймать
     }
 }
+
+// Оборачиваем initFirebase в промис для глобального отслеживания
+firebaseInitPromise = new Promise((resolve, reject) => {
+    initFirebase().then(resolve).catch(reject);
+});
+
 
 // --- 3. Обновление UI навигации ---
 function updateNavUI(user) {
@@ -130,10 +139,21 @@ function updateNavUI(user) {
 // --- 4. Обработчики Аутентификации ---
 async function handleLogin(event) {
     event.preventDefault();
-    if (!auth) {
-        showMessage("Firebase Auth не инициализирован.", "error");
+    
+    // ГАРАНТИРУЕМ, что Firebase инициализирован
+    try {
+        await firebaseInitPromise; 
+    } catch (e) {
+        showMessage("Не удалось инициализировать Firebase. Попробуйте обновить страницу.", "error");
         return;
     }
+    
+    // Проверка auth все еще полезна, но уже менее критична
+    if (!auth) {
+        showMessage("Firebase Auth не инициализирован. Попробуйте обновить страницу.", "error");
+        return;
+    }
+    
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
@@ -159,10 +179,21 @@ async function handleLogin(event) {
 
 async function handleRegister(event) {
     event.preventDefault();
-    if (!auth) {
-        showMessage("Firebase Auth не инициализирован.", "error");
+
+    // ГАРАНТИРУЕМ, что Firebase инициализирован
+    try {
+        await firebaseInitPromise; 
+    } catch (e) {
+        showMessage("Не удалось инициализировать Firebase. Попробуйте обновить страницу.", "error");
         return;
     }
+
+    // Проверка auth все еще полезна
+    if (!auth) {
+        showMessage("Firebase Auth не инициализирован. Попробуйте обновить страницу.", "error");
+        return;
+    }
+    
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
@@ -198,7 +229,10 @@ async function handleRegister(event) {
 
 async function handleLogout(event) {
     event.preventDefault();
-    if (!auth) return;
+    if (!auth) {
+        showMessage("Firebase Auth не инициализирован.", "error");
+        return;
+    }
 
     try {
         await signOut(auth);
@@ -264,8 +298,8 @@ function checkAccess(user) {
 
 // --- 6. Запуск всех скриптов ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Инициализация Firebase и слушатель состояния
-    initFirebase();
+    // NOTE: initFirebase() теперь вызывается один раз вне DOMContentLoaded и оборачивается в Promise
+    // чтобы все функции могли его ожидать.
 
     // 2. Логика для главной страницы (Вкладки + Parallax)
     const tabButtons = document.querySelectorAll('.tab-button');
