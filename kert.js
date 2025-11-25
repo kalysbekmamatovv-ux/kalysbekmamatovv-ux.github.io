@@ -1,62 +1,332 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Регистрация - КОЛДОН КЕЛЕТ</title>
-<link rel="stylesheet" href="kert.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body class="body-auth">
-<!-- Добавим контейнер для сообщений -->
-<div id="message-box"></div>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { 
+    getAuth, 
+    signInAnonymously, 
+    signInWithCustomToken, 
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+// Глобальные переменные Firebase
+let app, auth, db;
+const apiKey = ""; // API Key is automatically managed by Canvas
+
+// --- 1. Вспомогательная функция для сообщений (замена alert) ---
+function showMessage(message, type = 'success', duration = 3000) {
+    let msgBox = document.getElementById('message-box');
+    if (!msgBox) {
+        msgBox = document.createElement('div');
+        msgBox.id = 'message-box';
+        document.body.appendChild(msgBox);
+    }
     
-<nav class="navbar">
-<div class="container">
-<div class="logo">
-<a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
-<img src="photo_2025-10-18_00-50-11.jpg" alt="Логотип" class="logo-img">
-<span class="site-name">КОЛДОН КЕЛЕТ</span>
-</a>
-</div>
-<div class="nav-links">
-<a href="login.html" class="btn btn-login active">Вход в аккаунт</a>
-</div>
-</div>
-</nav>
-<div class="login-page">
-<div class="form-container">
-<div class="avatar-placeholder">
-<i class="fa-solid fa-user-plus"></i>
-</div>
+    msgBox.textContent = message;
+    msgBox.className = type; 
 
-<form id="register-form"> <!-- Удален action="#" -->
-<h2>Создание аккаунта</h2>
+    // Показать
+    setTimeout(() => {
+        msgBox.classList.add('show');
+    }, 10); 
 
-<div class="input-group">
-<i class="fa-solid fa-envelope"></i>
-<input type="email" id="email" name="email" placeholder="Email ID" required>
-</div>
+    // Скрыть
+    setTimeout(() => {
+        msgBox.classList.remove('show');
+    }, duration);
+}
 
-<div class="input-group">
-<i class="fa-solid fa-lock"></i>
-<input type="password" id="password" name="password" placeholder="Password" required>
-</div>
-<div class="input-group">
-<i class="fa-solid fa-check-double"></i>
-<input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm Password" required>
-</div>
+// --- 2. Инициализация Firebase и Аутентификация ---
+async function initFirebase() {
+    // Конфигурация Firebase берется из глобальной переменной __firebase_config
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 
-<button type="submit" class="btn-login-submit btn-full">Зарегистрироваться</button>
+    if (Object.keys(firebaseConfig).length === 0) {
+        console.error("Firebase configuration not found. Check if __firebase_config is defined.");
+        return;
+    }
 
-<p class="toggle-form">
-Уже есть аккаунт? <a href="login.html">Войти</a>
-</p>
-</form>
-</div>
-</div>
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
 
-<script type="module" src="kert.js"></script> 
-</body>
-</html>
+        // Попытка входа с токеном или анонимный вход
+        if (typeof __initial_auth_token !== 'undefined') {
+            await signInWithCustomToken(auth, __initial_auth_token);
+            // showMessage("Авторизация с токеном выполнена.", "success");
+        } else {
+            await signInAnonymously(auth);
+            // showMessage("Анонимный вход выполнен.", "success");
+        }
+        
+        // Слушатель состояния аутентификации
+        onAuthStateChanged(auth, (user) => {
+            updateNavUI(user);
+            if (document.body.classList.contains('body-books')) {
+                checkAccess(user);
+            }
+        });
+
+    } catch (error) {
+        console.error("Ошибка инициализации Firebase:", error);
+        showMessage("Ошибка инициализации: " + error.message, "error");
+    }
+}
+
+// --- 3. Обновление UI навигации ---
+function updateNavUI(user) {
+    const navLinksContainer = document.querySelector('.nav-links');
+    if (!navLinksContainer) return;
+
+    // Очищаем существующие кнопки входа/регистрации
+    let existingAuthElements = navLinksContainer.querySelectorAll('.btn-login, .btn-logout, .user-info');
+    existingAuthElements.forEach(el => el.remove());
+
+    // Всегда оставляем кнопку Библиотеки/На главную
+    const libraryLink = navLinksContainer.querySelector('a[href="books.html"]');
+    if (libraryLink) libraryLink.style.display = 'inline-block';
+
+    if (user && !user.isAnonymous) {
+        // Пользователь вошел в систему
+        const userInfo = document.createElement('span');
+        userInfo.classList.add('user-info');
+        // Показываем только email или 'Пользователь'
+        const email = user.email ? user.email.split('@')[0] : 'Пользователь';
+        userInfo.innerHTML = `<i class="fa-solid fa-user-circle"></i> ${email}`;
+
+        const logoutBtn = document.createElement('a');
+        logoutBtn.href = "#";
+        logoutBtn.classList.add('btn', 'btn-logout');
+        logoutBtn.textContent = 'Выход';
+        logoutBtn.addEventListener('click', handleLogout);
+
+        navLinksContainer.appendChild(userInfo);
+        navLinksContainer.appendChild(logoutBtn);
+    } else {
+        // Пользователь не вошел в систему (или аноним)
+        const loginLink = document.createElement('a');
+        loginLink.href = "login.html";
+        loginLink.classList.add('btn', 'btn-login');
+        loginLink.textContent = 'Вход в аккаунт';
+
+        const registerLink = document.createElement('a');
+        registerLink.href = "register.html";
+        registerLink.classList.add('btn', 'btn-login');
+        registerLink.textContent = 'Регистрация';
+
+        // Добавляем ссылки только если они не ведут на текущую страницу
+        if (!window.location.pathname.includes('login.html')) {
+            navLinksContainer.appendChild(loginLink);
+        }
+        if (!window.location.pathname.includes('register.html')) {
+            navLinksContainer.appendChild(registerLink);
+        }
+    }
+}
+
+// --- 4. Обработчики Аутентификации ---
+async function handleLogin(event) {
+    event.preventDefault();
+    if (!auth) {
+        showMessage("Firebase Auth не инициализирован.", "error");
+        return;
+    }
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showMessage("Успешный вход! Перенаправление...", "success");
+        setTimeout(() => {
+            window.location.href = 'books.html'; 
+        }, 1500);
+    } catch (error) {
+        let errorMessage = 'Ошибка входа.';
+        if (error.code === 'auth/user-not-found') {
+            errorMessage = 'Пользователь с таким email не найден.';
+        } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            errorMessage = 'Неверный пароль или email.';
+        } else {
+            errorMessage = 'Ошибка: ' + error.message;
+        }
+        showMessage(errorMessage, "error");
+        console.error("Ошибка входа:", error);
+    }
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+    if (!auth) {
+        showMessage("Firebase Auth не инициализирован.", "error");
+        return;
+    }
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (password !== confirmPassword) {
+        showMessage("Пароли не совпадают.", "error");
+        return;
+    }
+    if (password.length < 6) {
+         showMessage("Пароль должен быть не менее 6 символов.", "error");
+        return;
+    }
+
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        showMessage("Регистрация успешна! Вы вошли в систему.", "success");
+        setTimeout(() => {
+            window.location.href = 'books.html'; 
+        }, 1500);
+    } catch (error) {
+        let errorMessage = 'Ошибка регистрации.';
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'Этот email уже используется.';
+        } else if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Некорректный email адрес.';
+        } else {
+            errorMessage = 'Ошибка: ' + error.message;
+        }
+        showMessage(errorMessage, "error");
+        console.error("Ошибка регистрации:", error);
+    }
+}
+
+async function handleLogout(event) {
+    event.preventDefault();
+    if (!auth) return;
+
+    try {
+        await signOut(auth);
+        showMessage("Вы вышли из аккаунта.", "success");
+        // Перенаправление на главную или страницу входа после выхода
+        setTimeout(() => {
+            window.location.href = 'index.html'; 
+        }, 1000);
+    } catch (error) {
+        showMessage("Ошибка выхода: " + error.message, "error");
+        console.error("Ошибка выхода:", error);
+    }
+}
+
+
+// --- 5. Логика Динамических Эффектов ---
+
+// Эффект параллакса для главной страницы
+function setupParallaxEffect() {
+    const heroSection = document.querySelector('.hero-section');
+    if (!heroSection) return; 
+
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        // Смещение фона, чтобы создать эффект параллакса
+        heroSection.style.backgroundPositionY = `calc(50% + ${scrolled * 0.3}px)`;
+    });
+}
+
+// Контроль доступа к Библиотеке
+function checkAccess(user) {
+    const booksSection = document.querySelector('.books-section');
+    const bookListWrapper = document.getElementById('book-list-wrapper');
+    if (!booksSection || !bookListWrapper) return;
+
+    // Если пользователь не существует или он анонимный
+    if (!user || user.isAnonymous) {
+        // Создаем оверлей, если его нет
+        if (!document.getElementById('access-denied-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'access-denied-overlay';
+            overlay.classList.add('access-denied-overlay');
+            overlay.innerHTML = `
+                <h2>Доступ ограничен</h2>
+                <p>Для чтения и скачивания книг, пожалуйста, войдите в свой аккаунт или зарегистрируйтесь.</p>
+                <a href="login.html" class="btn-login-link"><i class="fa-solid fa-lock"></i> Войти в систему</a>
+            `;
+            bookListWrapper.appendChild(overlay);
+        }
+        // Скрываем список книг
+        const bookList = document.querySelector('.book-list');
+        if (bookList) bookList.style.opacity = '0.3';
+    } else {
+        // Пользователь авторизован - убираем оверлей и восстанавливаем opacity
+        const overlay = document.getElementById('access-denied-overlay');
+        if (overlay) overlay.remove();
+        
+        const bookList = document.querySelector('.book-list');
+        if (bookList) bookList.style.opacity = '1';
+    }
+}
+
+
+// --- 6. Запуск всех скриптов ---
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Инициализация Firebase и слушатель состояния
+    initFirebase();
+
+    // 2. Логика для главной страницы (Вкладки + Parallax)
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    if (tabButtons.length > 0) {
+        function switchTab(targetId) {
+            tabButtons.forEach(button => button.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            const activeButton = document.querySelector(`.tab-button[data-tab="${targetId}"]`);
+            const activeContent = document.getElementById(targetId);
+
+            if (activeButton && activeContent) {
+                activeButton.classList.add('active');
+                activeContent.classList.add('active');
+            }
+        }
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.getAttribute('data-tab');
+                switchTab(targetId);
+            });
+        });
+        // Активируем первую вкладку по умолчанию
+        const initialTabId = tabButtons[0].getAttribute('data-tab');
+        switchTab(initialTabId);
+    }
+    
+    // Запуск параллакса
+    setupParallaxEffect();
+
+    // 3. Логика для страницы Библиотеки (Фильтр + Контроль доступа)
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const bookItems = document.querySelectorAll('.book-item');
+    if (filterButtons.length > 0) {
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                const filterValue = button.getAttribute('data-filter');
+                bookItems.forEach(item => {
+                    const itemCategory = item.getAttribute('data-category');
+                    if (filterValue === 'all' || filterValue === itemCategory) {
+                        item.classList.remove('hide');
+                        item.style.animation = 'fadeIn 0.5s ease'; // Повторный запуск анимации
+                    } else {
+                        item.classList.add('hide');
+                    }
+                });
+            });
+        });
+    }
+
+    // 4. Обработчики форм Входа и Регистрации
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+});
