@@ -1,127 +1,128 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Библиотека | КОЛДОН КЕЛЕТ</title>
-    
-    <!-- Подключаем основной файл стилей (шапка, футер, цвета) -->
-    <link rel="stylesheet" href="kert.css"> 
-    <!-- Подключаем стили конкретно для библиотеки -->
-    <link rel="stylesheet" href="books.css"> 
-    
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Библиотека | КОЛДОН КЕЛЕТ</title>
+
+<!-- Подключаем основной файл стилей (шапка, футер, цвета) -->
+<link rel="stylesheet" href="kert.css"> 
+<!-- Подключаем стили конкретно для библиотеки -->
+<link rel="stylesheet" href="books.css"> 
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-
-    <!-- Навигация (как на главной) -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="logo">
-                <a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
-                    <img src="photo_2025-10-18_00-50-11.jpg" alt="Логотип" class="logo-img">
-                    <span class="site-name">КОЛДОН КЕЛЕТ</span>
-                </a>
-            </div>
-            
-            <div class="nav-links">
-                <a href="index.html" class="btn btn-login">На главную</a> 
-                <a href="login.html" class="btn btn-login">Вход в аккаунт</a> 
-            </div>
-        </div>
-    </nav>
-
-    <section class="books-section">
-        <div class="container">
-            <h2 class="section-title">Наша Библиотека</h2>
-            <p class="section-subtitle">Материалы для скачивания и изучения.</p>
-
-            <!-- === КНОПКИ ФИЛЬТРА (КАТАЛОГИ) === -->
-            <div class="catalog-filter">
-                <button class="filter-btn active" data-filter="all">Все книги</button>
-                <button class="filter-btn" data-filter="programming">Программирование</button>
-                <button class="filter-btn" data-filter="business">Бизнес и Финансы</button>
-                <button class="filter-btn" data-filter="literature">Худ. Литература</button>
-                <!-- <button class="filter-btn" data-filter="comics">Комиксы</button> -->
-            </div>
-            <!-- ================================ -->
-
-            <div class="book-list">
-
-                <!-- Книга 1: Литература -->
-                <div class="book-item" data-category="literature">
-                    <img src="images/unnamed.jpg" alt="Тень семи гор" class="book-cover">
-                    <h3>Тень семи гор (PDF)</h3>
-                    <p>Жанр: Боевик/Криминал, Драма, Любовь и Месть. Язык: Русский</p>
-                    <div class="book-actions">
-                        <a href="books/ger.pdf" target="_blank" class="btn btn-primary">Читать</a>
-                        <a href="books/ger.pdf" download="Тень сени гор.pdf" class="btn btn-secondary">Скачать</a>
-                    </div>
-                </div>
-
-                <!-- Книга 2: Бизнес -->
-                <div class="book-item" data-category="business">
-                    <img src="images/Batken.jpg" alt="Бай атам сунуштайт" class="book-cover">
-                    <h3>Бай атам сунуштайт (PDF)</h3>
-                    <p>Язык: Кыргызский, Финансы/Бизнес</p>
-                    <div class="book-actions">
-                        <a href="books/economies.pdf" target="_blank" class="btn btn-primary">Читать</a>
-                        <a href="books/economies.pdf" download="Бай атам сунуштайт.pdf" class="btn btn-secondary">Скачать</a>
-                    </div>
-                </div>
-                
-                <!-- Книга 3: Программирование -->
-                <div class="book-item" data-category="programming">
-                    <img src="images/7291550957.jpg" alt="Изучаем python" class="book-cover">
-                    <h3>Изучаем python (PDF)</h3>
-                    <p>Язык: Русский, Книга для начинающих программистов</p>
-                    <div class="book-actions">
-                        <a href="books/erik.pdf" target="_blank" class="btn btn-primary">Читать</a>
-                        <a href="books/erik.pdf" download="Изучаем питон.pdf" class="btn btn-secondary">Скачать</a>
-                    </div>
-                </div>
-                
-                <!-- Книга 4: Программирование -->
-                <div class="book-item" data-category="programming">
-                    <img src="images/17857.jpg" alt="Чистый Python" class="book-cover">
-                    <h3>Чистый Python (PDF)</h3>
-                    <p>Язык: Русский, Книга для чайников</p>
-                    <div class="book-actions">
-                        <a href="books/den.pdf" target="_blank" class="btn btn-primary">Читать</a>
-                        <a href="books/den.pdf" download="Чистый Python.pdf" class="btn btn-secondary">Скачать</a>
-                    </div>
-                </div>
-                
-                <!-- Книга 5: Программирование -->
-                 <div class="book-item" data-category="programming">
-                    <img src="images/rpZM7Z5rYrA.jpg" alt="Секреты Python" class="book-cover">
-                    <h3>Секреты Python (PDF)</h3>
-                    <p>Язык: Русский, Книга для продвинутых</p>
-                    <div class="book-actions">
-                        <a href="books/bred.pdf" target="_blank" class="btn btn-primary">Читать</a>
-                        <a href="books/bred.pdf" download="Секреты Python.pdf" class="btn btn-secondary">Скачать</a>
-                    </div>
-                </div>
-
-            </div> 
-        </div> 
-    </section> 
-
-    <footer id="contacts" class="contact-section">
-        <div class="container">
-            <h2 class="section-title">Связаться с нами</h2>
-            <p class="section-subtitle">Мы всегда открыты для новых идей и сотрудничества.</p>
-            <div class="contact-links">
-                <a href="https://www.instagram.com/mamatovv_lys?igsh=MW9sejBkcXd1a2tubA==" target="_blank" class="contact-link">Instagram</a>
-                <a href="https://t.me/Icecarefull" target="_blank" class="contact-link">Telegram</a>
-                <a href="mailto:info@koldonkelet.com" class="contact-link">info@koldonkelet.com</a>
-            </div>
-            <p class="copyright">&copy; 2025 КОЛДОН КЕЛЕТ. Все права защищены.</p>
-        </div>
-    </footer>
+<body class="body-books"> <!-- Добавлен класс для JS -->
+<!-- Добавим контейнер для сообщений -->
+<div id="message-box"></div>
     
-    <!-- Подключаем JavaScript -->
-    <script src="kert.js"></script> 
+<!-- Навигация (как на главной) -->
+<nav class="navbar">
+<div class="container">
+<div class="logo">
+<a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
+<img src="photo_2025-10-18_00-50-11.jpg" alt="Логотип" class="logo-img">
+<span class="site-name">КОЛДОН КЕЛЕТ</span>
+</a>
+</div>
+
+<!-- Навигационные ссылки будут динамически обновлены kert.js -->
+<div class="nav-links">
+<a href="index.html" class="btn btn-login">На главную</a> 
+<!-- Ссылки "Вход" / "Выход" добавляются/удаляются через JS (kert.js) -->
+<a href="login.html" class="btn btn-login">Вход в аккаунт</a> 
+<a href="register.html" class="btn btn-login">Регистрация</a>
+</div>
+</div>
+</nav>
+<section class="books-section">
+<div class="container">
+<h2 class="section-title">Наша Библиотека</h2>
+<p class="section-subtitle">Материалы для скачивания и изучения.</p>
+    
+<div class="book-list-wrapper" id="book-list-wrapper"> <!-- Обертка для блокировки доступа -->
+<!-- === КНОПКИ ФИЛЬТРА (КАТАЛОГИ) === -->
+<div class="catalog-filter">
+<button class="filter-btn active" data-filter="all">Все книги</button>
+<button class="filter-btn" data-filter="programming">Программирование</button>
+<button class="filter-btn" data-filter="business">Бизнес и Финансы</button>
+<button class="filter-btn" data-filter="literature">Худ. Литература</button>
+<!-- <button class="filter-btn" data-filter="comics">Комиксы</button> -->
+</div>
+<!-- ================================ -->
+<div class="book-list">
+<!-- Книга 1: Литература -->
+<div class="book-item" data-category="literature">
+<img src="images/unnamed.jpg" alt="Тень семи гор" class="book-cover">
+<h3>Тень семи гор (PDF)</h3>
+<p>Жанр: Боевик/Криминал, Драма, Любовь и Месть. Язык: Русский</p>
+<div class="book-actions">
+<a href="books/ger.pdf" target="_blank" class="btn btn-primary">Читать</a>
+<a href="books/ger.pdf" download="Тень сени гор.pdf" class="btn btn-secondary">Скачать</a>
+</div>
+</div>
+<!-- Книга 2: Бизнес -->
+<div class="book-item" data-category="business">
+<img src="images/Batken.jpg" alt="Бай атам сунуштайт" class="book-cover">
+<h3>Бай атам сунуштайт (PDF)</h3>
+<p>Язык: Кыргызский, Финансы/Бизнес</p>
+<div class="book-actions">
+<a href="books/economies.pdf" target="_blank" class="btn btn-primary">Читать</a>
+<a href="books/economies.pdf" download="Бай атам сунуштайт.pdf" class="btn btn-secondary">Скачать</a>
+</div>
+</div>
+
+<!-- Книга 3: Программирование -->
+<div class="book-item" data-category="programming">
+<img src="images/7291550957.jpg" alt="Изучаем python" class="book-cover">
+<h3>Изучаем python (PDF)</h3>
+<p>Язык: Русский, Книга для начинающих программистов</p>
+<div class="book-actions">
+<a href="books/erik.pdf" target="_blank" class="btn btn-primary">Читать</a>
+<a href="books/erik.pdf" download="Изучаем питон.pdf" class="btn btn-secondary">Скачать</a>
+</div>
+</div>
+
+<!-- Книга 4: Программирование -->
+<div class="book-item" data-category="programming">
+<img src="images/17857.jpg" alt="Чистый Python" class="book-cover">
+<h3>Чистый Python (PDF)</h3>
+<p>Язык: Русский, Книга для чайников</p>
+<div class="book-actions">
+<a href="books/den.pdf" target="_blank" class="btn btn-primary">Читать</a>
+<a href="books/den.pdf" download="Чистый Python.pdf" class="btn btn-secondary">Скачать</a>
+</div>
+</div>
+
+<!-- Книга 5: Программирование -->
+<div class="book-item" data-category="programming">
+<img src="images/rpZM7Z5rYrA.jpg" alt="Секреты Python" class="book-cover">
+<h3>Секреты Python (PDF)</h3>
+<p>Язык: Русский, Книга для продвинутых</p>
+<div class="book-actions">
+<a href="books/bred.pdf" target="_blank" class="btn btn-primary">Читать</a>
+<a href="books/bred.pdf" download="Секреты Python.pdf" class="btn btn-secondary">Скачать</a>
+</div>
+</div>
+</div> 
+</div> <!-- Конец book-list-wrapper -->
+</div> 
+</section> 
+<footer id="contacts" class="contact-section">
+<div class="container">
+<h2 class="section-title">Связаться с нами</h2>
+<p class="section-subtitle">Мы всегда открыты для новых идей и сотрудничества.</p>
+<div class="contact-links">
+<a href="https://instagram.com/your-profile" target="_blank" class="contact-link">Instagram</a>
+<a href="https://t.me/your-username" target="_blank" class="contact-link">Telegram</a>
+<a href="mailto:info@koldonkelet.com" class="contact-link">info@koldonkelet.com</a>
+</div>
+<p class="copyright">&copy; 2025 КОЛДОН КЕЛЕТ. Все права защищены.</p>
+</div>
+</footer>
+
+<!-- Подключаем JavaScript с type="module" -->
+<script type="module" src="kert.js"></script> 
 </body>
 </html>
