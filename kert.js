@@ -14,12 +14,12 @@ import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11
 // --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ИСПОЛЬЗУЕТСЯ АКТУАЛЬНЫЙ КЛЮЧ И ID) ---
 // ВНИМАНИЕ: Проверьте правильность значений. Эта конфигурация должна быть скопирована из настроек вашего проекта Firebase.
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8", // Ваш API Key
-    authDomain: "koldon-kelet.firebaseapp.com", // Ваш Auth Domain
-    projectId: "koldon-kelet", // Ваш Project ID
-    storageBucket: "koldon-kelet.appspot.com", // Скорректирован суффикс для storageBucket
+    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
+    authDomain: "koldon-kelet.firebaseapp.com",
+    projectId: "koldon-kelet",
+    storageBucket: "koldon-kelet.firebasestorage.app",
     messagingSenderId: "179403934698",
-    appId: "1:179403934698:web:5680ad38bae74053108093" 
+    appId: "1:179403934698:web:39b765f8e9b8d159108093"
 };
 
 let app, auth, db;
