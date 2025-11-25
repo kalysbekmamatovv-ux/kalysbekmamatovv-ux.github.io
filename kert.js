@@ -11,9 +11,20 @@ import {
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
-// Глобальные переменные Firebase
+// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ВСТАВЛЕНА ВРУЧНУЮ) ---
+// Внимание: Эта конфигурация была предоставлена пользователем, так как 
+// автоматическая переменная __firebase_config была недоступна.
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
+    authDomain: "koldon-kelet.firebaseapp.com",
+    projectId: "koldon-kelet",
+    storageBucket: "koldon-kelet.firebasestorage.app",
+    messagingSenderId: "179403934698",
+    appId: "1:179403934698:web:39b765f8e9b8d159108093"
+};
+
 let app, auth, db;
-const apiKey = ""; // API Key is automatically managed by Canvas
+const apiKey = ""; 
 
 // Используем промис для отслеживания завершения инициализации
 let firebaseInitPromise; 
@@ -44,25 +55,16 @@ function showMessage(message, type = 'success', duration = 3000) {
 // --- 2. Инициализация Firebase и Аутентификация ---
 // Теперь initFirebase принимает resolve/reject для контроля Promise
 async function initFirebase(resolve, reject) {
-    // Конфигурация Firebase берется из глобальной переменной __firebase_config
-    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-    // *** ДОБАВЛЕНО ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ***
-    if (typeof console !== 'undefined') {
-        console.log("Status конфигурации Firebase:", firebaseConfig);
-    }
-    // **********************************************
     
-    if (Object.keys(firebaseConfig).length === 0) {
-        console.error("Firebase configuration not found. Check if __firebase_config is defined.");
-        showMessage("Ошибка: Конфигурация Firebase не найдена.", "error");
-        reject(new Error("Firebase config missing."));
-        return;
+    // *** ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ***
+    if (typeof console !== 'undefined') {
+        console.log("Status конфигурации Firebase: ИСПОЛЬЗУЕТСЯ ПРЯМАЯ КОНФИГУРАЦИЯ.");
     }
+    // **********************************
 
     try {
         // 1. Инициализация объектов Firebase
-        app = initializeApp(firebaseConfig);
+        app = initializeApp(FIREBASE_CONFIG); // Используем прямо вставленную конфигурацию
         auth = getAuth(app);
         db = getFirestore(app);
 
@@ -70,6 +72,7 @@ async function initFirebase(resolve, reject) {
         resolve(); 
 
         // 2. Аутентификация и слушатели (продолжают работать в фоновом режиме)
+        
         if (typeof __initial_auth_token !== 'undefined') {
             await signInWithCustomToken(auth, __initial_auth_token);
         } else {
@@ -86,7 +89,7 @@ async function initFirebase(resolve, reject) {
 
     } catch (error) {
         console.error("КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ Firebase:", error);
-        // showMessage("Ошибка инициализации: " + error.message, "error"); // Убрано, чтобы не дублировать сообщение
+        showMessage("Критическая ошибка инициализации. Проверьте правильность вставленных ключей.", "error"); 
         reject(error); // Бросаем ошибку, чтобы Promis.reject мог ее поймать
     }
 }
