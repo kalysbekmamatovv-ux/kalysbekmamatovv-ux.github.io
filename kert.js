@@ -47,6 +47,12 @@ async function initFirebase(resolve, reject) {
     // Конфигурация Firebase берется из глобальной переменной __firebase_config
     const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 
+    // *** ДОБАВЛЕНО ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ***
+    if (typeof console !== 'undefined') {
+        console.log("Status конфигурации Firebase:", firebaseConfig);
+    }
+    // **********************************************
+    
     if (Object.keys(firebaseConfig).length === 0) {
         console.error("Firebase configuration not found. Check if __firebase_config is defined.");
         showMessage("Ошибка: Конфигурация Firebase не найдена.", "error");
@@ -79,8 +85,8 @@ async function initFirebase(resolve, reject) {
         });
 
     } catch (error) {
-        console.error("Ошибка инициализации Firebase:", error);
-        showMessage("Ошибка инициализации: " + error.message, "error");
+        console.error("КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ Firebase:", error);
+        // showMessage("Ошибка инициализации: " + error.message, "error"); // Убрано, чтобы не дублировать сообщение
         reject(error); // Бросаем ошибку, чтобы Promis.reject мог ее поймать
     }
 }
@@ -155,8 +161,6 @@ async function handleLogin(event) {
         return;
     }
     
-    // Проверка auth была удалена, т.к. ее гарантирует Promise
-    
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
@@ -190,8 +194,6 @@ async function handleRegister(event) {
         showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
         return;
     }
-
-    // Проверка auth была удалена, т.к. ее гарантирует Promise
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -352,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
 
     // 4. Обработчики форм Входа и Регистрации
     const loginForm = document.getElementById('login-form');
