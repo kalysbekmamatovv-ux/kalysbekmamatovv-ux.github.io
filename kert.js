@@ -11,22 +11,15 @@ import {
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
-// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ИСПОЛЬЗУЕТСЯ АКТУАЛЬНЫЙ КЛЮЧ И ID) ---
-// ВНИМАНИЕ: Проверьте правильность значений. Эта конфигурация должна быть скопирована из настроек вашего проекта Firebase.
+// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE ---
+// ИСПРАВЛЕНО: Project ID установлен только как "koldon-kelet", как вы настаивали.
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8".
-
-  authDomain: "koldon-kelet.firebaseapp.com".
-  projectId: "koldon-kelet".
-
-  storageBucket: "koldon-kelet.firebasestorage.app".
-
-  messagingSenderId: "179403934698".
-
-  appId: "1:179403934698:web:5680ad38bae74053108093".
-
-
-  
+    apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8", // Ваш API Key
+    projectId: "koldon-kelet", 
+    authDomain: "koldon-kelet.firebaseapp.com", 
+    storageBucket: "koldon-kelet.appspot.com", 
+    messagingSenderId: "179403934698",
+    appId: "1:179403934698:web:5680ad38bae74053108093" 
 };
 
 let app, auth, db;
@@ -70,12 +63,6 @@ async function initFirebase(resolve, reject) {
         auth = getAuth(app);
         db = getFirestore(app); 
         
-        // ВАЖНО: Мы делаем дополнительную проверку здесь
-        const authDomainCheck = auth.config.authDomain;
-        if (!authDomainCheck.includes(FIREBASE_CONFIG.projectId)) {
-             console.warn(`ПРЕДУПРЕЖДЕНИЕ: Проект ID "${FIREBASE_CONFIG.projectId}" не совпадает с доменом авторизации "${authDomainCheck}". Проверьте FIREBASE_CONFIG.`);
-        }
-        
         console.log("Инициализация успешно запущена. Ожидание состояния аутентификации.");
 
         // *** МОМЕНТ РАЗРЕШЕНИЯ PROMISE: объекты auth/db установлены ***
@@ -95,6 +82,10 @@ async function initFirebase(resolve, reject) {
             if (document.body.classList.contains('body-books')) {
                 checkAccess(user);
             }
+            // Диагностика: Пытаемся записать в Firestore сразу после успешного входа (для анонимов)
+            if (user && user.uid && user.isAnonymous) {
+                 saveLoginTime(user.uid); 
+            }
         });
 
     } catch (error) {
@@ -106,11 +97,15 @@ async function initFirebase(resolve, reject) {
         // Если ошибка связана с доменом, даем конкретные инструкции
         if (error.code === 'auth/unauthorized-domain') {
             customError = "КРИТИЧЕСКАЯ ОШИБКА: Домен 'kalysbekmamatovv-ux.github.io' не авторизован. Добавьте его в Firebase -> Authentication -> Settings -> Authorized domains.";
-        } else if (error.message.includes('authDomain')) {
-            customError = "КРИТИЧЕСКАЯ ОШИБКА: Проблема с параметром 'authDomain' в FIREBASE_CONFIG. Проверьте опечатку.";
         } else if (error.code === 'auth/operation-not-allowed') {
             customError = "КРИТИЧЕСКАЯ ОШИБКА: Метод входа Email/Password выключен. Включите его в Firebase -> Authentication -> Sign-in method.";
+        } else if (error.code === 'app/invalid-project-id') {
+             customError = "КРИТИЧЕСКАЯ ОШИБКА: Project ID недействителен. Возможно, ваш Project ID содержит суффикс, например 'koldon-kelet-1234'. Проверьте консоль Firebase.";
+        } else if (error.message.includes('A Firebase App named')) {
+            // Эта ошибка возникает, если инициализация запускается дважды (редко, но возможно)
+             customError = "КРИТИЧЕСКАЯ ОШИБКА: Повторная инициализация Firebase. Проверьте, что скрипт kert.js подключен только один раз.";
         }
+
 
         showMessage(customError, "error", 10000); 
         reject(error);
@@ -131,9 +126,13 @@ firebaseInitPromise = new Promise((resolve, reject) => {
  */
 async function saveLoginTime(userId) {
     try {
+        // ГАРАНТИРУЕМ, что DB инициализирован
+        if (!db) {
+            await firebaseInitPromise; 
+        }
+
         const timestamp = new Date().toISOString();
-        // ВНИМАНИЕ: Используем путь artifacts/{appId}/users/{userId}/...
-        // Но так как у нас нет __app_id, используем простой путь для диагностики
+        // ВНИМАНИЕ: Используем простой путь для диагностики
         const userDocRef = doc(db, "users", userId); 
 
         // Записываем данные в /users/{userId}
