@@ -1,61 +1,62 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация - КОЛДОН КЕЛЕТ</title>
-    <link rel="stylesheet" href="kert.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Регистрация - КОЛДОН КЕЛЕТ</title>
+<link rel="stylesheet" href="kert.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="body-auth">
+<!-- Добавим контейнер для сообщений -->
+<div id="message-box"></div>
+    
+<nav class="navbar">
+<div class="container">
+<div class="logo">
+<a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
+<img src="photo_2025-10-18_00-50-11.jpg" alt="Логотип" class="logo-img">
+<span class="site-name">КОЛДОН КЕЛЕТ</span>
+</a>
+</div>
+<div class="nav-links">
+<a href="login.html" class="btn btn-login active">Вход в аккаунт</a>
+</div>
+</div>
+</nav>
+<div class="login-page">
+<div class="form-container">
+<div class="avatar-placeholder">
+<i class="fa-solid fa-user-plus"></i>
+</div>
 
-    <nav class="navbar">
-        <div class="container">
-            <div class="logo">
-                <a href="index.html" style="display: flex; align-items: center; text-decoration: none;">
-                    <img src="photo_2025-10-18_00-50-11.jpg" alt="Логотип" class="logo-img">
-                    <span class="site-name">КОЛДОН КЕЛЕТ</span>
-                </a>
-            </div>
-            <div class="nav-links">
-                <a href="login.html" class="btn btn-login active">Вход в аккаунт</a>
-            </div>
-        </div>
-    </nav>
+<form id="register-form"> <!-- Удален action="#" -->
+<h2>Создание аккаунта</h2>
 
-    <div class="login-page">
-        <div class="form-container">
-            <div class="avatar-placeholder">
-                <i class="fa-solid fa-user-plus"></i>
-            </div>
-            
-            <form id="register-form" action="#">
-                <h2>Создание аккаунта</h2>
-                
-                <div class="input-group">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="email" name="email" placeholder="Email ID" required>
-                </div>
-                
-                <div class="input-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="password" name="password" placeholder="Password" required>
-                </div>
+<div class="input-group">
+<i class="fa-solid fa-envelope"></i>
+<input type="email" id="email" name="email" placeholder="Email ID" required>
+</div>
 
-                <div class="input-group">
-                    <i class="fa-solid fa-check-double"></i>
-                    <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm Password" required>
-                </div>
-                
-                <button type="submit" class="btn-login-submit btn-full">Зарегистрироваться</button>
-                
-                <p class="toggle-form">
-                    Уже есть аккаунт? <a href="login.html">Войти</a>
-                </p>
-            </form>
-        </div>
-    </div>
+<div class="input-group">
+<i class="fa-solid fa-lock"></i>
+<input type="password" id="password" name="password" placeholder="Password" required>
+</div>
+<div class="input-group">
+<i class="fa-solid fa-check-double"></i>
+<input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm Password" required>
+</div>
 
+<button type="submit" class="btn-login-submit btn-full">Зарегистрироваться</button>
+
+<p class="toggle-form">
+Уже есть аккаунт? <a href="login.html">Войти</a>
+</p>
+</form>
+</div>
+</div>
+
+<script type="module" src="kert.js"></script> 
 </body>
 </html>
