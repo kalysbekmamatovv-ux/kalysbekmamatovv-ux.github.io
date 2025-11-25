@@ -8,11 +8,11 @@ import {
     signInWithEmailAndPassword,
     signOut
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
 // --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ВСТАВЛЕНА ВРУЧНУЮ) ---
-// ВНИМАНИЕ: Используется новая конфигурация, предоставленная пользователем (предыдущий ключ был заблокирован).
+// ВНИМАНИЕ: Используется новая конфигурация, предоставленная пользователем.
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyCshzHGrLcWZXBqcIP9-BqfSCO-URVWga8",
     authDomain: "koldon-kelet.firebaseapp.com",
@@ -20,7 +20,6 @@ const FIREBASE_CONFIG = {
     storageBucket: "koldon-kelet.firebasestorage.app",
     messagingSenderId: "179403934698",
     appId: "1:179403934698:web:5680ad38bae74053108093" // Новый App ID
-    // measurementId удален, так как он не используется в текущей логике
 };
 
 let app, auth, db;
@@ -62,7 +61,7 @@ async function initFirebase(resolve, reject) {
         // 1. Инициализация объектов Firebase с новым ключом
         app = initializeApp(FIREBASE_CONFIG); 
         auth = getAuth(app);
-        db = getFirestore(app);
+        db = getFirestore(app); // Инициализация Firestore
 
         // *** МОМЕНТ РАЗРЕШЕНИЯ PROMISE: объекты auth/db установлены ***
         resolve(); 
@@ -84,9 +83,10 @@ async function initFirebase(resolve, reject) {
         });
 
     } catch (error) {
-        // Ловим ошибки, если даже с новым ключом что-то не так
+        // Ловим ошибки инициализации
         console.error("КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ Firebase:", error);
-        showMessage("Критическая ошибка инициализации. Возможно, домен не добавлен в список разрешенных в настройках Firebase.", "error"); 
+        // Выводим универсальное сообщение, которое призывает проверить настройки
+        showMessage("Критическая ошибка инициализации. Проверьте настройки Firebase (домены и методы входа).", "error"); 
         reject(error);
     }
 }
@@ -96,8 +96,34 @@ firebaseInitPromise = new Promise((resolve, reject) => {
     initFirebase(resolve, reject); 
 });
 
+// --- 3. Функции Firestore (Диагностика и запись данных) ---
 
-// --- 3. Обновление UI навигации ---
+/**
+ * Сохраняет время входа пользователя в Firestore.
+ * Используется для проверки полной работоспособности базы данных.
+ * @param {string} userId - UID текущего пользователя.
+ */
+async function saveLoginTime(userId) {
+    try {
+        const timestamp = new Date().toISOString();
+        const userDocRef = doc(db, "users", userId); 
+
+        // Записываем данные в /users/{userId}
+        await setDoc(userDocRef, { 
+            lastLogin: timestamp,
+            email: auth.currentUser.email || 'anon' 
+        }, { merge: true }); // Используем merge: true для обновления, а не перезаписи
+        
+        console.log(`[Firestore] Успешно записано время входа для ${userId}.`);
+
+    } catch (error) {
+        // Если здесь ошибка, то проблема в правилах безопасности Firestore (Security Rules)
+        console.error("[Firestore] Ошибка записи данных (проверьте Security Rules):", error);
+    }
+}
+
+
+// --- 4. Обновление UI навигации ---
 function updateNavUI(user) {
     const navLinksContainer = document.querySelector('.nav-links');
     if (!navLinksContainer) return;
@@ -148,7 +174,7 @@ function updateNavUI(user) {
     }
 }
 
-// --- 4. Обработчики Аутентификации ---
+// --- 5. Обработчики Аутентификации ---
 async function handleLogin(event) {
     event.preventDefault();
     
@@ -164,7 +190,10 @@ async function handleLogin(event) {
     const password = document.getElementById('password').value;
 
     try {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // Диагностика: Пытаемся записать в Firestore
+        await saveLoginTime(userCredential.user.uid); 
+        
         showMessage("Успешный вход! Перенаправление...", "success");
         setTimeout(() => {
             window.location.href = 'books.html'; 
@@ -208,7 +237,10 @@ async function handleRegister(event) {
     }
 
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Диагностика: Пытаемся записать в Firestore
+        await saveLoginTime(userCredential.user.uid); 
+
         showMessage("Регистрация успешна! Вы вошли в систему.", "success");
         setTimeout(() => {
             window.location.href = 'books.html'; 
@@ -252,7 +284,7 @@ async function handleLogout(event) {
 }
 
 
-// --- 5. Логика Динамических Эффектов ---
+// --- 6. Логика Динамических Эффектов ---
 
 // Эффект параллакса для главной страницы
 function setupParallaxEffect() {
@@ -300,7 +332,7 @@ function checkAccess(user) {
 }
 
 
-// --- 6. Запуск всех скриптов ---
+// --- 7. Запуск всех скриптов ---
 document.addEventListener('DOMContentLoaded', () => {
     // 2. Логика для главной страницы (Вкладки + Parallax)
     const tabButtons = document.querySelectorAll('.tab-button');
