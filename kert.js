@@ -10,32 +10,21 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
-// --- ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ FIREBASE (ОБНОВЛЕНА) ---
-/**
- * ВНИМАНИЕ: Конфигурация обновлена на основе предоставленного вами ключа 
- * (Project ID: akajon-e1ab7). 
- */
+// КОНФИГУРАЦИЯ FIREBASE
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDoixf1ARGsy12WM7jU5CElYYp6kGPqin0", // Ваш API Key
-    // ОБНОВЛЕНО: Project ID 
+    apiKey: "AIzaSyDoixf1ARGsy12WM7jU5CElYYp6kGPqin0", 
     projectId: "akajon-e1ab7", 
-    // ОБНОВЛЕНО: Auth Domain
     authDomain: "akajon-e1ab7.firebaseapp.com", 
-    // ОБНОВЛЕНО: Storage Bucket
     storageBucket: "akajon-e1ab7.firebasestorage.app", 
     messagingSenderId: "84897464590",
     appId: "1:84897464590:web:cd298bfc043393a981175f",
-    // ОБНОВЛЕНО: Дополнительный ключ (measurementId)
     measurementId: "G-255QNSNKNM" 
 };
 
 let app, auth, db;
-
-// Используем промис для отслеживания завершения инициализации
 let firebaseInitPromise; 
 
-// --- 1. Вспомогательная функция для сообщений (замена alert) ---
+// --- Вспомогательные функции ---
 function showMessage(message, type = 'success', duration = 3000) {
     let msgBox = document.getElementById('message-box');
     if (!msgBox) {
@@ -43,400 +32,274 @@ function showMessage(message, type = 'success', duration = 3000) {
         msgBox.id = 'message-box';
         document.body.appendChild(msgBox);
     }
-    
     msgBox.textContent = message;
     msgBox.className = type; 
-
-    // Показать
-    setTimeout(() => {
-        msgBox.classList.add('show');
-    }, 10); 
-
-    // Скрыть
-    setTimeout(() => {
-        msgBox.classList.remove('show');
-    }, duration);
+    setTimeout(() => msgBox.classList.add('show'), 10); 
+    setTimeout(() => msgBox.classList.remove('show'), duration);
 }
 
-// --- 2. Инициализация Firebase и Аутентификация ---
+// --- Инициализация ---
 async function initFirebase(resolve, reject) {
-    
-    if (typeof console !== 'undefined') {
-        console.log("Status: Попытка инициализации Firebase с предоставленной конфигурацией...");
-    }
-
     try {
-        // 1. Инициализация объектов Firebase
         app = initializeApp(FIREBASE_CONFIG); 
         auth = getAuth(app);
         db = getFirestore(app); 
         
-        console.log("Инициализация успешно запущена. Ожидание состояния аутентификации.");
-
-        // *** МОМЕНТ РАЗРЕШЕНИЯ PROMISE: объекты auth/db установлены ***
+        console.log("Firebase Init Success");
         resolve(); 
 
-        // 2. Аутентификация (анонимный вход или вход с токеном)
+        // Проверка токена или анонимный вход
         if (typeof __initial_auth_token !== 'undefined') {
             await signInWithCustomToken(auth, __initial_auth_token);
         } else {
-            // Анонимный вход позволяет системе продолжить работу, даже если авторизация не настроена
-            // Оборачиваем в try-catch, поскольку анонимный вход может быть отключен
-            try {
-                await signInAnonymously(auth);
-            } catch (e) {
-                // Если анонимный вход отключен, просто игнорируем ошибку и ждем onAuthStateChanged
-                console.warn("Анонимный вход не удался (возможно, отключен). Ожидание onAuthStateChanged.", e.code);
-            }
+             // Анонимный вход нужен только если нет активной сессии
+             // В реальном приложении лучше проверять currentUser
         }
         
-        // Слушатель состояния аутентификации
+        // Слушатель состояния
         onAuthStateChanged(auth, (user) => {
             updateNavUI(user);
-            if (document.body.classList.contains('body-books')) {
+            // Если мы на странице книг, проверяем доступ
+            if (document.querySelector('.books-section')) {
                 checkAccess(user);
-            }
-            // Диагностика: Пытаемся записать в Firestore сразу после успешного входа (для анонимов)
-            if (user && user.uid && user.isAnonymous) {
-                 saveLoginTime(user.uid); 
             }
         });
 
     } catch (error) {
-        // Ловим ошибки инициализации
-        console.error("КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ Firebase:", error);
-        
-        let customError = "Критическая ошибка инициализации. Домен заблокирован или конфигурация неверна.";
-
-        // Если ошибка связана с доменом, даем конкретные инструкции
-        if (error.code === 'auth/unauthorized-domain') {
-            // ВНИМАНИЕ: Это критически важно! Добавьте ваш URL GitHub Pages (например, https://ВАШ_ПОЛЬЗОВАТЕЛЬ.github.io/ВАШ_РЕПОЗИТОРИЙ)
-            customError = "КРИТИЧЕСКАЯ ОШИБКА: Домен не авторизован! Добавьте URL-адрес вашего сайта (например, 'https://<ИМЯ>.github.io/<РЕПОЗИТОРИЙ>') в Firebase -> Authentication -> Settings -> Authorized domains.";
-        } else if (error.code === 'auth/operation-not-allowed') {
-            customError = "КРИТИЧЕСКАЯ ОШИБКА: Метод входа Email/Password выключен. Включите его в Firebase -> Authentication -> Sign-in method.";
-        } else if (error.code === 'app/invalid-project-id') {
-             customError = "КРИТИЧЕСКАЯ ОШИБКА: Project ID недействителен. Убедитесь, что вы правильно вставили полный Project ID.";
-        } else if (error.message.includes('A Firebase App named')) {
-            // Эта ошибка возникает, если инициализация запускается дважды (редко, но возможно)
-             customError = "КРИТИЧЕСКАЯ ОШИБКА: Повторная инициализация Firebase. Проверьте, что скрипт kert.js подключен только один раз.";
-        }
-
-
-        showMessage(customError, "error", 10000); 
+        console.error("Firebase Error:", error);
         reject(error);
     }
 }
 
-// Оборачиваем initFirebase в промис для глобального отслеживания
-firebaseInitPromise = new Promise((resolve, reject) => {
-    initFirebase(resolve, reject); 
-});
+firebaseInitPromise = new Promise((resolve, reject) => initFirebase(resolve, reject));
 
-// --- 3. Функции Firestore (Диагностика и запись данных) ---
-
-/**
- * Сохраняет время входа пользователя в Firestore.
- * Используется для проверки полной работоспособности базы данных.
- * @param {string} userId - UID текущего пользователя.
- */
+// --- Firestore: Запись входа (для диагностики) ---
 async function saveLoginTime(userId) {
     try {
-        // ГАРАНТИРУЕМ, что DB инициализирован
-        if (!db) {
-            await firebaseInitPromise; 
-        }
-
+        if (!db) await firebaseInitPromise; 
         const timestamp = new Date().toISOString();
-        // ВНИМАНИЕ: Используем простой путь для диагностики
         const userDocRef = doc(db, "users", userId); 
-
-        // Записываем данные в /users/{userId}
         await setDoc(userDocRef, { 
             lastLogin: timestamp,
-            email: auth.currentUser.email || 'anon' 
-        }, { merge: true }); // Используем merge: true для обновления, а не перезаписи
-        
-        console.log(`[Firestore] Успешно записано время входа для ${userId}.`);
-
+            email: auth.currentUser?.email || 'anon' 
+        }, { merge: true });
     } catch (error) {
-        // Если здесь ошибка, то проблема в правилах безопасности Firestore (Security Rules)
-        console.error("[Firestore] Ошибка записи данных (проверьте Security Rules).", error);
+        console.error("Firestore Save Error:", error);
     }
 }
 
-
-// --- 4. Обновление UI навигации ---
+// --- UI: Навигация ---
 function updateNavUI(user) {
     const navLinksContainer = document.querySelector('.nav-links');
     if (!navLinksContainer) return;
 
-    // Очищаем существующие кнопки входа/регистрации
-    let existingAuthElements = navLinksContainer.querySelectorAll('.btn-login, .btn-logout, .user-info');
-    existingAuthElements.forEach(el => el.remove());
+    // Очистка старых кнопок
+    const authBtns = navLinksContainer.querySelectorAll('.btn-login, .btn-logout, .user-info');
+    authBtns.forEach(el => el.remove());
 
-    // Всегда оставляем кнопку Библиотеки/На главную
-    const libraryLink = navLinksContainer.querySelector('a[href="books.html"]');
-    if (libraryLink) libraryLink.style.display = 'inline-block';
+    const isLibraryPage = window.location.pathname.includes('books.html');
 
     if (user && !user.isAnonymous) {
-        // Пользователь вошел в систему
+        // --- Пользователь ВОШЕЛ ---
         const userInfo = document.createElement('span');
         userInfo.classList.add('user-info');
-        // Показываем только email или 'Пользователь'
-        const email = user.email ? user.email.split('@')[0] : 'Пользователь';
-        userInfo.innerHTML = `<i class="fa-solid fa-user-circle"></i> ${email}`;
+        const emailShort = user.email ? user.email.split('@')[0] : 'User';
+        userInfo.innerHTML = `<i class="fa-solid fa-user-circle"></i> ${emailShort}`;
 
-        const logoutBtn = document.createElement('a');
-        logoutBtn.href = "#";
-        logoutBtn.classList.add('btn', 'btn-logout');
+        const logoutBtn = document.createElement('button');
+        logoutBtn.classList.add('btn-logout');
         logoutBtn.textContent = 'Выход';
         logoutBtn.addEventListener('click', handleLogout);
 
         navLinksContainer.appendChild(userInfo);
         navLinksContainer.appendChild(logoutBtn);
     } else {
-        // Пользователь не вошел в систему (или аноним)
-        const loginLink = document.createElement('a');
-        loginLink.href = "login.html";
-        loginLink.classList.add('btn', 'btn-login');
-        loginLink.textContent = 'Вход в аккаунт';
+        // --- Пользователь НЕ вошел ---
+        if (!isLibraryPage && !window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
+             // На страницах входа/регистрации кнопки можно не дублировать, если не нужно
+        } else {
+             const loginLink = document.createElement('a');
+             loginLink.href = "login.html";
+             loginLink.className = "btn btn-login";
+             loginLink.textContent = "Вход";
+             
+             const regLink = document.createElement('a');
+             regLink.href = "register.html";
+             regLink.className = "btn btn-login";
+             regLink.textContent = "Регистрация";
 
-        const registerLink = document.createElement('a');
-        registerLink.href = "register.html";
-        registerLink.classList.add('btn', 'btn-login');
-        registerLink.textContent = 'Регистрация';
-
-        // Добавляем ссылки только если они не ведут на текущую страницу
-        if (!window.location.pathname.includes('login.html')) {
-            navLinksContainer.appendChild(loginLink);
-        }
-        if (!window.location.pathname.includes('register.html')) {
-            navLinksContainer.appendChild(registerLink);
+             navLinksContainer.appendChild(loginLink);
+             navLinksContainer.appendChild(regLink);
         }
     }
 }
 
-// --- 5. Обработчики Аутентификации ---
+// --- Обработчики Входа/Регистрации (ИСПРАВЛЕНЫ) ---
+
 async function handleLogin(event) {
     event.preventDefault();
     
-    // ГАРАНТИРУЕМ, что Firebase инициализирован до продолжения
-    try {
-        await firebaseInitPromise; 
-    } catch (e) {
-        showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
-        return;
-    }
-    
+    // Получаем элементы
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+
+    // Визуальная обратная связь
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Входим...";
 
     try {
+        await firebaseInitPromise;
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        // Диагностика: Пытаемся записать в Firestore
-        await saveLoginTime(userCredential.user.uid); 
         
-        showMessage("Успешный вход! Перенаправление...", "success");
+        await saveLoginTime(userCredential.user.uid);
+        
+        showMessage("Успешно! Перенаправление...", "success");
+
+        // Мгновенная переадресация
         setTimeout(() => {
             window.location.href = 'books.html'; 
-        }, 1500);
+        }, 500);
+
     } catch (error) {
-        let errorMessage = 'Ошибка входа.';
-        if (error.code === 'auth/user-not-found') {
-            errorMessage = 'Пользователь с таким email не найден.';
-        } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'Неверный пароль или email.';
-        } else {
-            errorMessage = 'Ошибка: ' + error.message;
-        }
-        showMessage(errorMessage, "error");
-        console.error("Ошибка входа:", error);
+        // Возврат кнопки в исходное состояние
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+
+        let msg = "Ошибка входа";
+        if (error.code === 'auth/user-not-found') msg = "Пользователь не найден";
+        if (error.code === 'auth/wrong-password') msg = "Неверный пароль";
+        if (error.code === 'auth/invalid-credential') msg = "Неверный email или пароль";
+        showMessage(msg, "error");
     }
 }
 
 async function handleRegister(event) {
     event.preventDefault();
-
-    // ГАРАНТИРУЕМ, что Firebase инициализирован до продолжения
-    try {
-        await firebaseInitPromise; 
-    } catch (e) {
-        showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
-        return;
-    }
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
 
     if (password !== confirmPassword) {
-        showMessage("Пароли не совпадают.", "error");
+        showMessage("Пароли не совпадают", "error");
         return;
     }
-    if (password.length < 6) {
-         showMessage("Пароль должен быть не менее 6 символов.", "error");
-        return;
-    }
+
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Создаем аккаунт...";
 
     try {
+        await firebaseInitPromise;
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Диагностика: Пытаемся записать в Firestore
-        await saveLoginTime(userCredential.user.uid); 
+        await saveLoginTime(userCredential.user.uid);
 
-        showMessage("Регистрация успешна! Вы вошли в систему.", "success");
+        showMessage("Аккаунт создан! Входим...", "success");
         setTimeout(() => {
-            window.location.href = 'books.html'; 
-        }, 1500);
+            window.location.href = 'books.html';
+        }, 500);
+
     } catch (error) {
-        let errorMessage = 'Ошибка регистрации.';
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = 'Этот email уже используется.';
-        } else if (error.code === 'auth/invalid-email') {
-            errorMessage = 'Некорректный email адрес.';
-        } else {
-            errorMessage = 'Ошибка: ' + error.message;
-        }
-        showMessage(errorMessage, "error");
-        console.error("Ошибка регистрации:", error);
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        
+        let msg = "Ошибка регистрации: " + error.message;
+        if (error.code === 'auth/email-already-in-use') msg = "Этот Email уже занят";
+        if (error.code === 'auth/weak-password') msg = "Пароль слишком слабый (мин. 6 символов)";
+        showMessage(msg, "error");
     }
 }
 
 async function handleLogout(event) {
     event.preventDefault();
-    
-    // ГАРАНТИРУЕМ, что Firebase инициализирован до продолжения
-    try {
-        await firebaseInitPromise; 
-    } catch (e) {
-        showMessage("Не удалось подключиться к системе аутентификации. Пожалуйста, обновите страницу.", "error");
-        return;
-    }
-
     try {
         await signOut(auth);
-        showMessage("Вы вышли из аккаунта.", "success");
-        // Перенаправление на главную или страницу входа после выхода
-        setTimeout(() => {
-            window.location.href = 'index.html'; 
-        }, 1000);
+        showMessage("Вы вышли из системы", "success");
+        setTimeout(() => window.location.reload(), 500);
     } catch (error) {
-        showMessage("Ошибка выхода: " + error.message, "error");
-        console.error("Ошибка выхода:", error);
+        console.error(error);
     }
 }
 
+// --- Логика страниц ---
+function setupTabs() {
+    const buttons = document.querySelectorAll('.tab-button');
+    const contents = document.querySelectorAll('.tab-content');
+    
+    if(!buttons.length) return;
 
-// --- 6. Логика Динамических Эффектов ---
-
-// Эффект параллакса для главной страницы
-function setupParallaxEffect() {
-    const heroSection = document.querySelector('.hero-section');
-    if (!heroSection) return; 
-
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        // Смещение фона, чтобы создать эффект параллакса
-        heroSection.style.backgroundPositionY = `calc(50% + ${scrolled * 0.3}px)`;
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+            
+            btn.classList.add('active');
+            const target = document.getElementById(btn.dataset.tab);
+            if(target) target.classList.add('active');
+        });
     });
 }
 
-// Контроль доступа к Библиотеке
 function checkAccess(user) {
-    const booksSection = document.querySelector('.books-section');
-    const bookListWrapper = document.getElementById('book-list-wrapper');
-    if (!booksSection || !bookListWrapper) return;
+    const listWrapper = document.getElementById('book-list-wrapper');
+    if (!listWrapper) return;
 
-    // Если пользователь не существует или он анонимный
+    // Если нет пользователя или он аноним
     if (!user || user.isAnonymous) {
-        // Создаем оверлей, если его нет
         if (!document.getElementById('access-denied-overlay')) {
             const overlay = document.createElement('div');
             overlay.id = 'access-denied-overlay';
-            overlay.classList.add('access-denied-overlay');
+            overlay.className = 'access-denied-overlay';
             overlay.innerHTML = `
                 <h2>Доступ ограничен</h2>
-                <p>Для чтения и скачивания книг, пожалуйста, войдите в свой аккаунт или зарегистрируйтесь.</p>
-                <a href="login.html" class="btn-login-link"><i class="fa-solid fa-lock"></i> Войти в систему</a>
+                <p>Пожалуйста, войдите, чтобы читать книги.</p>
+                <a href="login.html" class="btn-login-link"><i class="fa-solid fa-lock"></i> Войти</a>
             `;
-            bookListWrapper.appendChild(overlay);
+            listWrapper.appendChild(overlay);
         }
-        // Скрываем список книг
-        const bookList = document.querySelector('.book-list');
-        if (bookList) bookList.style.opacity = '0.3';
+        const list = document.querySelector('.book-list');
+        if(list) list.style.filter = "blur(5px)";
     } else {
-        // Пользователь авторизован - убираем оверлей и восстанавливаем opacity
         const overlay = document.getElementById('access-denied-overlay');
         if (overlay) overlay.remove();
-        
-        const bookList = document.querySelector('.book-list');
-        if (bookList) bookList.style.opacity = '1';
+        const list = document.querySelector('.book-list');
+        if(list) list.style.filter = "none";
     }
 }
 
+function setupFilters() {
+    const btns = document.querySelectorAll('.filter-btn');
+    const items = document.querySelectorAll('.book-item');
+    if(!btns.length) return;
 
-// --- 7. Запуск всех скриптов ---
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const filter = btn.dataset.filter;
+            items.forEach(item => {
+                if (filter === 'all' || item.dataset.category === filter) {
+                    item.classList.remove('hide');
+                } else {
+                    item.classList.add('hide');
+                }
+            });
+        });
+    });
+}
+
+// --- ЗАПУСК ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 2. Логика для главной страницы (Вкладки + Parallax)
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-    if (tabButtons.length > 0) {
-        function switchTab(targetId) {
-            tabButtons.forEach(button => button.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
+    setupTabs();
+    setupFilters();
 
-            const activeButton = document.querySelector(`.tab-button[data-tab="${targetId}"]`);
-            const activeContent = document.getElementById(targetId);
-
-            if (activeButton && activeContent) {
-                activeButton.classList.add('active');
-                activeContent.classList.add('active');
-            }
-        }
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.getAttribute('data-tab');
-                switchTab(targetId);
-            });
-        });
-        // Активируем первую вкладку по умолчанию
-        const initialTabId = tabButtons[0].getAttribute('data-tab');
-        switchTab(initialTabId);
-    }
-    
-    // Запуск параллакса
-    setupParallaxEffect();
-
-    // 3. Логика для страницы Библиотеки (Фильтр + Контроль доступа)
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const bookItems = document.querySelectorAll('.book-item');
-    if (filterButtons.length > 0) {
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                const filterValue = button.getAttribute('data-filter');
-                bookItems.forEach(item => {
-                    const itemCategory = item.getAttribute('data-category');
-                    if (filterValue === 'all' || filterValue === itemCategory) {
-                        item.classList.remove('hide');
-                        item.style.animation = 'fadeIn 0.5s ease'; // Повторный запуск анимации
-                    } else {
-                        item.classList.add('hide');
-                    }
-                });
-            });
-        });
-    }
-
-
-    // 4. Обработчики форм Входа и Регистрации
     const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
-    }
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
 
-    const registerForm = document.getElementById('register-form');
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister);
-    }
+    const regForm = document.getElementById('register-form');
+    if (regForm) regForm.addEventListener('submit', handleRegister);
 });
